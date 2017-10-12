@@ -1,0 +1,112 @@
+﻿<#@ template debug="true" hostspecific="true" #>
+<#@ output extension="cs" #>
+<#@ assembly name="EnvDTE" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="EnvDTE" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Diagnostics" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#       
+    EnvDTE.DTE dte = GetEnvDTE();
+	var className = "ExpressAppImageNames";
+	var namespaceName = "Para.ExpressApp.Images";
+#>
+namespace <#= namespaceName #>
+{
+    public static class <#= className #>
+	{
+<#
+	var sourceFolder = Path.Combine(Path.GetDirectoryName(Host.TemplateFile), "Images");
+
+	var imageNames =Directory.EnumerateFiles(sourceFolder, "*.png", SearchOption.AllDirectories).Select(file => Path.GetFileNameWithoutExtension(file));
+
+	var typeGroups = imageNames.Select(imageName => imageName.Split('_')[0]).Distinct();
+
+
+	foreach(var type in typeGroups)
+	{
+		Write("\t\tpublic static class ");
+		Write(type);
+		WriteLine("");
+		WriteLine("\t\t{");
+		
+
+
+		var actionGroups = imageNames.Select(imageName => imageName.Split('_')[1]).Distinct();
+
+		foreach(var action in actionGroups)
+		{
+			Write("\t\t\tpublic static class ");
+			WriteLine(action);
+			WriteLine("\t\t\t{");
+
+			foreach(var imageName in  imageNames)
+			{		
+				if(imageName.Split('_').First() == type && imageName.Split('_').Skip(1).Take(1).First() == action)
+				{
+					if(imageName.EndsWith("_32x32"))
+					{
+						continue;	
+					}
+					else
+					{				
+						Write("\t\t\t\tpublic const string ");
+						var constName = String.Join("_", imageName.Split('_').Skip(2)).Replace("-", "_");
+						
+						if(constName == action || constName == type)
+						{
+							constName = constName + "Image";
+						}
+
+						Write(constName);
+						Write(" = \"");
+						Write(imageName);
+						Write("\";");
+						WriteLine("");
+					}
+				}
+			}
+
+			WriteLine("\t\t\t}");
+		}
+
+		
+		
+
+		WriteLine("");
+		Write("\t\t}");
+		WriteLine("");
+		WriteLine("");
+	}
+
+	foreach(var imageName in  imageNames)
+	{
+		//var fileName = Path.GetFileNameWithoutExtension(file);
+
+		//var type = fileName.Split('_')[0];
+
+
+
+
+	}
+#>
+	}
+}
+
+<#+   
+    private EnvDTE.DTE GetEnvDTE()
+    {
+        IServiceProvider hostServiceProvider = (IServiceProvider)Host;
+        
+        if (hostServiceProvider == null)
+               throw new Exception("Host property returned unexpected value (null)");
+        
+        EnvDTE.DTE dte = (EnvDTE.DTE)hostServiceProvider.GetService(typeof(EnvDTE.DTE));
+        
+        if (dte == null)
+               throw new Exception("Unable to retrieve EnvDTE.DTE");
+    
+        return dte;
+    }
+#>
