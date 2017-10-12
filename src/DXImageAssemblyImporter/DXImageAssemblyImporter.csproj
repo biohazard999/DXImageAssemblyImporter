@@ -5,8 +5,4 @@
     <TargetFramework>net462</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-
 </Project>
